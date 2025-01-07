@@ -1,0 +1,12 @@
+specVersion: "v1beta"
+serviceId: "agri_market"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "fdcdb"
+      cloudSql:
+        instanceId: "agri_market-fdc"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]

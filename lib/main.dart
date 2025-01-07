@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:agri_market/splashscreen.dart';
 //import 'package:agri_market/screens/authentication/email_auth_screen.dart';
 //import 'package:agri_market/screens/authentication/email_verification_screen.dart';
 //import 'package:agri_market/screens/authentication/reset_password_screen.dart';
@@ -47,7 +48,7 @@ class MyApp extends StatelessWidget {
         primaryColor: Colors.indigo,
         fontFamily: 'RobotoSlab-Regular',
       ),
-      //home: SplashScreen(), // Set the HomeScreen as the initial screen
+      home: const SplashScreen(), // Set the HomeScreen as the initial screen
     );
   }
 }
