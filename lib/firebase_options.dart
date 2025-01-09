@@ -53,7 +53,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyB5Mf2PesAjvWw6oTAU6VgMHcLTgHe6yHc',
-    appId: '1:540457100143:android:95f05ad7610554b2bcbe9a',
+    appId: '1:540457100143:android:1a5b06cd5606533dbcbe9a',
     messagingSenderId: '540457100143',
     projectId: 'agri-market-d5ed6',
     databaseURL: 'https://agri-market-d5ed6-default-rtdb.firebaseio.com',
@@ -92,4 +92,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'agri-market-d5ed6.firebasestorage.app',
     measurementId: 'G-EM1B5C67MV',
   );
+
 }

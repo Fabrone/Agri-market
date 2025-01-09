@@ -8,9 +8,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:540457100143:android:95f05ad7610554b2bcbe9a",
+        "mobilesdk_app_id": "1:540457100143:android:2e40756b800d97b5bcbe9a",
         "android_client_info": {
-          "package_name": "com.example.agrimkt"
+          "package_name": "com.example.agri_market"
         }
       },
       "oauth_client": [
@@ -30,6 +30,13 @@
             {
               "client_id": "540457100143-9rp123o5n601iac18cend6t210mu3skm.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "540457100143-ec3nm0thkvbrqkfkg0o26m2tk1ldsbkg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.agriMarket"
+              }
             }
           ]
         }
