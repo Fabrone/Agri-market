@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "540457100143",
+    "firebase_url": "https://agri-market-d5ed6-default-rtdb.firebaseio.com",
+    "project_id": "agri-market-d5ed6",
+    "storage_bucket": "agri-market-d5ed6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:540457100143:android:95f05ad7610554b2bcbe9a",
+        "android_client_info": {
+          "package_name": "com.example.agrimkt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "540457100143-9rp123o5n601iac18cend6t210mu3skm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5Mf2PesAjvWw6oTAU6VgMHcLTgHe6yHc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "540457100143-9rp123o5n601iac18cend6t210mu3skm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
