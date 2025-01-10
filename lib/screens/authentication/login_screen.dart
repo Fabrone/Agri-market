@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:logger/logger.dart';
+import 'package:agri_market/screens/home_screen.dart';
+import 'package:agri_market/screens/authentication/signup_screen.dart'; // Import SignupScreen
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,18 +14,92 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final GoogleSignInProvider googleSignInProvider = GoogleSignInProvider();
+  final GoogleSignInProvider _googleSignInProvider = GoogleSignInProvider();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _isLoading = false; // Loading state
-  bool _obscureText = true; // Password visibility toggle
+  bool _isLoading = false;
+  bool _obscureText = true;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // Handle email/password login
+  Future<void> _handleEmailLogin(BuildContext context) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    setState(() => _isLoading = true);
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      if (!mounted) return;
+      navigator.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomePage()),
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      
+      String message = switch (e.code) {
+        'user-not-found' => 'No user found for that email. Please sign up first.',
+        'wrong-password' => 'Wrong password provided for that user.',
+        _ => 'Login failed: ${e.message}'
+      };
+      
+      scaffoldMessenger.clearSnackBars();
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text(message)));
+      
+      if (e.code == 'user-not-found') {
+        navigator.pushReplacement(
+          MaterialPageRoute(builder: (_) => const SignUpScreen()),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // Handle Google Sign In
+  Future<void> _handleGoogleSignIn(BuildContext context) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    setState(() => _isLoading = true);
+
+    try {
+      final user = await _googleSignInProvider.loginWithGoogle();
+      
+      if (!mounted) return;
+
+      if (user != null) {
+        navigator.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomePage()),
+          (route) => false,
+        );
+      } else {
+        scaffoldMessenger.clearSnackBars();
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('Google login failed. Please try again.')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -77,9 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             _obscureText ? Icons.visibility : Icons.visibility_off,
                           ),
                           onPressed: () {
-                            setState(() {
-                              _obscureText = !_obscureText;
-                            });
+                            setState(() => _obscureText = !_obscureText);
                           },
                         ),
                       ),
@@ -92,52 +166,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20.0),
                     ElevatedButton.icon(
-                      onPressed: _isLoading ? null : () async {
-                        if (_formKey.currentState!.validate()) {
-                          setState(() {
-                            _isLoading = true; // Start loading
-                          });
-                          try {
-                            // Attempt to sign in with email and password
-                            await FirebaseAuth.instance.signInWithEmailAndPassword(
-                              email: _emailController.text.trim(),
-                              password: _passwordController.text.trim(),
-                            );
-
-                            // Check if the widget is still mounted before navigating
-                            if (!mounted) return;
-
-                            // Navigate to home screen on successful login
-                            // ignore: use_build_context_synchronously
-                            Navigator.of(context).pushReplacementNamed('/home');
-                          } on FirebaseAuthException catch (e) {
-                            // Handle errors (e.g., wrong password, user not found)
-                            String message;
-                            if (e.code == 'user-not-found') {
-                              message = 'No user found for that email.';
-                            } else if (e.code == 'wrong-password') {
-                              message = 'Wrong password provided for that user.';
-                            } else {
-                              message = 'Login failed: ${e.message}';
-                            }
-
-                            // Check if the widget is still mounted before showing the SnackBar
-                            if (mounted) {
-                              // ignore: use_build_context_synchronously
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(message)),
-                              );
-                            }
-                          } finally {
-                            // Stop loading if the widget is still mounted
-                            if (mounted) {
-                              setState(() {
-                                _isLoading = false; // Stop loading
-                              });
-                            }
-                          }
-                        }
-                      },
+                      onPressed: _isLoading 
+                        ? null 
+                        : () => _handleEmailLogin(context),
                       icon: const Icon(Icons.email),
                       label: const Text(
                         'Login',
@@ -156,41 +187,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 20.0),
               ElevatedButton.icon(
-                onPressed: () async {
-                  setState(() {
-                    _isLoading = true; // Start loading
-                  });
-                  final user = await googleSignInProvider.loginWithGoogle();
-
-                  // Immediately check if the widget is still mounted after the async call
-                  if (!mounted) {
-                    setState(() {
-                      _isLoading = false; // Stop loading if not mounted
-                    });
-                    return;
-                  }
-
-                  if (user != null) {
-                    
-                    // ignore: use_build_context_synchronously
-                    Navigator.of(context).pushReplacementNamed('/home');
-                  } else {
-                    // Check if the widget is still mounted before showing the SnackBar
-                    if (mounted) {
-                      // ignore: use_build_context_synchronously
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Google login failed.')),
-                      );
-                    }
-                  }
-
-                  // Stop loading if the widget is still mounted
-                  if (mounted) {
-                    setState(() {
-                      _isLoading = false; // Stop loading
-                    });
-                  }
-                },
+                onPressed: _isLoading 
+                  ? null 
+                  : () => _handleGoogleSignIn(context),
                 icon: const FaIcon(
                   FontAwesomeIcons.google,
                   color: Colors.white,
@@ -209,9 +208,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 10.0),
               TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed('/signup');
-                },
+                onPressed: () => Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                ),
                 child: const Text(
                   'Do not have an account? Sign Up',
                   style: TextStyle(
@@ -231,21 +230,23 @@ class _LoginScreenState extends State<LoginScreen> {
 class GoogleSignInProvider {
   final googleSignIn = GoogleSignIn();
   final auth = FirebaseAuth.instance;
-  final Logger logger = Logger(); // Initialize logger
+  final Logger logger = Logger();
 
   Future<User?> loginWithGoogle() async {
     try {
       final googleUser = await googleSignIn.signIn();
       if (googleUser == null) return null;
+
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
+      
       final userCredential = await auth.signInWithCredential(credential);
       return userCredential.user;
     } catch (e) {
-      logger.e('Google login error: $e'); // Use logger instead of print
+      logger.e('Google login error: $e');
       return null;
     }
   }

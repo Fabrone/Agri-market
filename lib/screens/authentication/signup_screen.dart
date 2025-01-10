@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:agri_market/screens/authentication/login_screen.dart'; // Import the LoginScreen
-import 'package:agri_market/screens/authentication/email_verif_screen.dart'; // Import the EmailVerificationScreen
-//import 'package:agri_market/screens/home_screen.dart'; // Import the HomeScreen
+import 'package:agri_market/screens/home_screen.dart'; // Import the HomeScreen
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -165,21 +164,19 @@ class SignUpScreenState extends State<SignUpScreen> {
       // Update user display name
       await userCredential.user?.updateDisplayName(displayName);
 
-      // Send email verification
-      await userCredential.user?.sendEmailVerification();
-
       if (!mounted) return;
 
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Sign up successful. A verification link has been sent to $email.'),
+        const SnackBar(
+          content: Text('Sign up successful.'),
         ),
       );
 
-      // Navigate to the EmailVerificationScreen
+      // Navigate to the HomeScreen
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const EmailVerificationScreen()),
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } catch (e) {
       if (!mounted) return;
