@@ -109,3 +109,7 @@ flutter:
   assets:
     - assets/agrimarket_logo.jpg
     - assets/image-background.jpg
+    - assets/banner1.jpg
+    - assets/banner2.jpg
+    - assets/banner3.jpg
+    - assets/product.jpg

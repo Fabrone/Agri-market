@@ -317,7 +317,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     const Icon(Icons.location_on, size: 16, color: Colors.grey),
                     Text(
-                      'Manila',
+                      'Nyeri',
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 12,

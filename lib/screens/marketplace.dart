@@ -203,7 +203,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    '₱50/kg',
+                    'Kshs 50/kg',
                     style: TextStyle(
                       color: primaryGreen,
                       fontSize: 14,
@@ -220,7 +220,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Manila',
+                        'Nairobi',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 12,
