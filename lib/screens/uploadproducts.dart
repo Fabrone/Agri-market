@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:agri_market/app_colors.dart'; // Import the AppColors class
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'dart:typed_data'; // Import Uint8List
+import 'package:firebase_storage/firebase_storage.dart'; // Import Firebase Storage
+import 'package:agri_market/firestore_helper.dart';
+import 'package:agri_market/product_model.dart';
 
 class UploadProductsPage extends StatefulWidget {
   const UploadProductsPage({super.key});
@@ -15,13 +20,64 @@ class UploadProductsPageState extends State<UploadProductsPage> {
   String _description = '';
   double _price = 0.0;
   String _quantityType = 'per kg';
+  File? _imageFile;
+
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _captureImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _uploadProduct() async {
+    if (_formKey.currentState!.validate() && _imageFile != null) {
+      // Read the image file as bytes
+      Uint8List imageBytes = await _imageFile!.readAsBytes();
+
+      // Upload to Firebase Storage
+      final storageRef = FirebaseStorage.instance.ref().child('products/${_imageFile!.path.split('/').last}');
+      await storageRef.putData(imageBytes); // Uploading Uint8List directly
+
+      // Get the download URL
+      final String downloadUrl = await storageRef.getDownloadURL();
+
+      final product = Product(
+        id: '', // Firestore will generate this
+        category: _selectedCategory!,
+        description: _description,
+        price: _price,
+        quantityType: _quantityType,
+        imageUrl: downloadUrl, // Store the download URL
+      );
+
+      await FirestoreHelper().addProduct(product);
+      
+      // Check if the widget is still mounted before navigating
+      if (!mounted) return;
+
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Upload Products'),
-        backgroundColor: AppColors.primaryGreen, // Use AppColors
+        backgroundColor: AppColors.primaryGreen,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -89,7 +145,20 @@ class UploadProductsPageState extends State<UploadProductsPage> {
                 },
                 validator: (value) => value == null ? 'Select price type' : null,
               ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _pickImage,
+                child: const Text('Select Image from Gallery'),
+              ),
+              ElevatedButton(
+                onPressed: _captureImage,
+                child: const Text('Capture Image with Camera'),
+              ),
               const SizedBox(height: 20),
+              if (_imageFile != null) ...[
+                Image.file(_imageFile!, height: 150),
+                const SizedBox(height: 20),
+              ],
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
@@ -103,21 +172,5 @@ class UploadProductsPageState extends State<UploadProductsPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _uploadProduct() async {
-    await FirebaseFirestore.instance.collection('products').add({
-      'category': _selectedCategory,
-      'description': _description,
-      'price': _price,
-      'quantityType': _quantityType,
-      // You may want to add an image URL as well
-    });
-
-    // Check if the widget is still mounted before navigating
-    if (!mounted) return;
-
-    // Optionally, navigate back or show a success message
-    Navigator.pop(context);
   }
 }

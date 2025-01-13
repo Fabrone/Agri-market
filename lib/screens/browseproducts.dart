@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:agri_market/app_colors.dart'; // Import the AppColors class
+import 'package:agri_market/product_model.dart'; // Import the Product model
 
 class BrowseProductsPage extends StatelessWidget {
   const BrowseProductsPage({super.key});
@@ -23,17 +24,18 @@ class BrowseProductsPage extends StatelessWidget {
             return const Center(child: Text('No products available'));
           }
 
-          final products = snapshot.data!.docs;
+          final products = snapshot.data!.docs.map((doc) {
+            return Product.fromMap(doc.data() as Map<String, dynamic>);
+          }).toList();
 
           return ListView.builder(
-            scrollDirection: Axis.horizontal,
             itemCount: products.length,
             itemBuilder: (context, index) {
               final product = products[index];
               return _buildProductCard(
-                product['image'],
-                product['description'],
-                product['price'],
+                product.imageUrl,
+                product.description,
+                product.price,
               );
             },
           );
@@ -44,7 +46,6 @@ class BrowseProductsPage extends StatelessWidget {
 
   Widget _buildProductCard(String image, String description, double price) {
     return Container(
-      width: 160,
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
