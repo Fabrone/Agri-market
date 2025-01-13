@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:agri_market/screens/marketplace.dart';
+import 'package:agri_market/screens/browseproducts.dart'; 
+import 'package:agri_market/screens/uploadproducts.dart'; 
+import 'package:agri_market/app_colors.dart'; 
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -12,10 +16,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  // Custom Colors
-  static const Color primaryGreen = Color(0xFF2E7D32);
-  static const Color secondaryGreen = Color(0xFF81C784);
 
   final List<String> _carouselImages = [
     'assets/banner1.jpg',
@@ -46,7 +46,7 @@ class _HomePageState extends State<HomePage> {
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: primaryGreen,
+        backgroundColor: AppColors.primaryGreen,
         child: const Icon(Icons.add_shopping_cart),
         onPressed: () {
           // Navigate to cart
@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
           DrawerHeader(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [primaryGreen, secondaryGreen],
+                colors: [AppColors.primaryGreen, AppColors.secondaryGreen],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage> {
                 const CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.white,
-                  child: Icon(Icons.person, color: primaryGreen, size: 35),
+                  child: Icon(Icons.person, color: AppColors.primaryGreen, size: 35),
                 ),
                 const SizedBox(height: 10),
                 const Text(
@@ -105,7 +105,7 @@ class _HomePageState extends State<HomePage> {
 
   ListTile _buildDrawerItem(IconData icon, String title) {
     return ListTile(
-      leading: Icon(icon, color: primaryGreen),
+      leading: Icon(icon, color: AppColors.primaryGreen),
       title: Text(title),
       onTap: () {
         // Navigate to respective screen
@@ -120,7 +120,7 @@ class _HomePageState extends State<HomePage> {
         height: 200.0,
         autoPlay: true,
         enlargeCenterPage: true,
-        aspectRatio: 16/9,
+        aspectRatio: 16 / 9,
         autoPlayCurve: Curves.fastOutSlowIn,
         enableInfiniteScroll: true,
         autoPlayAnimationDuration: const Duration(milliseconds: 800),
@@ -159,9 +159,9 @@ class _HomePageState extends State<HomePage> {
       child: TextField(
         decoration: InputDecoration(
           hintText: 'Search products, sellers, or locations...',
-          prefixIcon: const Icon(Icons.search, color: primaryGreen),
+          prefixIcon: const Icon(Icons.search, color: AppColors.primaryGreen),
           suffixIcon: IconButton(
-            icon: const Icon(Icons.filter_list, color: primaryGreen),
+            icon: const Icon(Icons.filter_list, color: AppColors.primaryGreen),
             onPressed: () {
               // Show filter options
             },
@@ -184,7 +184,7 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: primaryGreen,
+              color: AppColors.primaryGreen,
             ),
           ),
           const SizedBox(height: 10),
@@ -205,17 +205,28 @@ class _HomePageState extends State<HomePage> {
   Widget _buildActionButton(IconData icon, String label) {
     return InkWell(
       onTap: () {
-        // Navigate to respective screen
+        if (label.contains('Browse')) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const BrowseProductsPage()),
+          );
+        } else if (label.contains('Upload')) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UploadProductsPage()),
+          );
+        }
+        // Add similar navigation for My Cart and Near Me
       },
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
-              color: secondaryGreen.withOpacity(0.2),
+              color: AppColors.secondaryGreen.withOpacity(0.2),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Icon(icon, color: primaryGreen, size: 30),
+            child: Icon(icon, color: AppColors.primaryGreen, size: 30),
           ),
           const SizedBox(height: 8),
           Text(
@@ -244,7 +255,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: primaryGreen,
+                color: AppColors.primaryGreen,
               ),
             ),
           ),
@@ -309,7 +320,7 @@ class _HomePageState extends State<HomePage> {
                 const Text(
                   'Kshs 50/kg',
                   style: TextStyle(
-                    color: primaryGreen,
+                    color: AppColors.primaryGreen,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -346,7 +357,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: primaryGreen,
+                color: AppColors.primaryGreen,
               ),
             ),
           ),
@@ -375,10 +386,10 @@ class _HomePageState extends State<HomePage> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: secondaryGreen.withOpacity(0.2),
+            color: AppColors.secondaryGreen.withOpacity(0.2),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: primaryGreen),
+          child: Icon(icon, color: AppColors.primaryGreen),
         ),
         const SizedBox(height: 8),
         Text(
@@ -406,20 +417,20 @@ class _HomePageState extends State<HomePage> {
         ),
       ],
       currentIndex: _selectedIndex,
-      selectedItemColor: primaryGreen,
+      selectedItemColor: AppColors.primaryGreen,
       onTap: (index) {
         setState(() {
           _selectedIndex = index;
           if (index == 1) { // Market tab
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const MarketplacePage()),
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MarketplacePage()),
             );
           }
 
-         // else if (index == 2) { // Profile tab
-         //   Navigator.push(...);
-         // }
+          // else if (index == 2) { // Profile tab
+          //   Navigator.push(...);
+          // }
 
         });
       },
@@ -431,7 +442,7 @@ class _HomePageState extends State<HomePage> {
       floating: true,
       pinned: true,
       expandedHeight: 120.0,
-      backgroundColor: primaryGreen,
+      backgroundColor: AppColors.primaryGreen,
       leading: IconButton(
         icon: const Icon(Icons.menu),
         color: Colors.white,
