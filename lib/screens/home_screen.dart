@@ -1,22 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:agri_market/screens/authentication/signup_screen.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+      // Navigate to the respective page based on the index
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Agrimarket Home'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {
-              _showMenu(context);
-            },
-          ),
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () {
+            _showMenu(context);
+          },
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -30,25 +42,17 @@ class HomePage extends StatelessWidget {
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
-            // User Type Selection
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildUserTypeButton(context, 'Crop Contributor', Icons.eco, () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const FarmerPage(),
-                  ));
-                }),
-                _buildUserTypeButton(context, 'Market Explorer', Icons.search, () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const BuyerPage(),
-                  ));
-                }),
-              ],
+            // Search Icon
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                // Navigate to search page
+              },
+              tooltip: 'Search',
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
 
             // Additional Features Section
             const Padding(
@@ -67,21 +71,31 @@ class HomePage extends StatelessWidget {
             _buildFeatureCard(context, 'User Profile', Icons.person, () {
               // Navigate to user profile page
             }),
+            _buildFeatureCard(context, 'Intuitive Agricultural Tools', Icons.build, () {
+              // Navigate to agricultural tools page
+            }),
+            _buildFeatureCard(context, 'Weather Updates', Icons.wb_sunny, () {
+              // Navigate to weather updates page
+            }),
+            _buildFeatureCard(context, 'Market Trends', Icons.trending_up, () {
+              // Navigate to market trends page
+            }),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildUserTypeButton(BuildContext context, String title, IconData icon, Function onPressed) {
-    return ElevatedButton.icon(
-      onPressed: () => onPressed(),
-      icon: Icon(icon),
-      label: Text(title),
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        backgroundColor: Colors.green,
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.store),
+            label: 'Marketplace',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }
