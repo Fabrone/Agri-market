@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MarketplacePage extends StatefulWidget {
-  const MarketplacePage({super.key});
+  final String selectedCategory; // Accept selected category
+
+  const MarketplacePage({super.key, required this.selectedCategory}); // Modify constructor
 
   @override
   State<MarketplacePage> createState() => _MarketplacePageState();
 }
 
 class _MarketplacePageState extends State<MarketplacePage> {
-  final List<String> _categories = [
-    'All',
-    'Vegetables',
-    'Fruits',
-    'Grains',
-    'Herbs',
-    'Seeds'
-  ];
   String _selectedCategory = 'All';
   String _sortBy = 'Latest';
 
   // Custom Colors (matching homepage)
   static const Color primaryGreen = Color(0xFF2E7D32);
-  static const Color secondaryGreen = Color(0xFF81C784);
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.selectedCategory; // Set the selected category
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: primaryGreen,
-        title: const Text('Marketplace',
-            style: TextStyle(color: Colors.white)),
+        title: Text('$_selectedCategory Products', style: const TextStyle(color: Colors.white)),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list, color: Colors.white),
@@ -46,7 +45,6 @@ class _MarketplacePageState extends State<MarketplacePage> {
       body: Column(
         children: [
           _buildSearchBar(),
-          _buildCategoryFilter(),
           _buildSortDropdown(),
           Expanded(
             child: _buildProductGrid(),
@@ -88,43 +86,15 @@ class _MarketplacePageState extends State<MarketplacePage> {
     );
   }
 
-  Widget _buildCategoryFilter() {
-    return SizedBox(
-      height: 50,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        itemCount: _categories.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: FilterChip(
-              label: Text(_categories[index]),
-              selected: _selectedCategory == _categories[index],
-              onSelected: (selected) {
-                setState(() {
-                  _selectedCategory = _categories[index];
-                });
-              },
-              backgroundColor: Colors.white,
-              selectedColor: secondaryGreen,
-              checkmarkColor: primaryGreen,
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildSortDropdown() {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            '$_selectedCategory Products',
-            style: const TextStyle(
+          const Text(
+            'Products',
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -150,22 +120,47 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 
   Widget _buildProductGrid() {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.75,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: 10, // Replace with actual product count
-      itemBuilder: (context, index) {
-        return _buildProductCard();
+    return FutureBuilder<List<Product>>(
+      future: _fetchProductsByCategory(_selectedCategory),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return const Center(child: Text('Error loading products'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No products found'));
+        }
+
+        final products = snapshot.data!;
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.75,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+          ),
+          itemCount: products.length,
+          itemBuilder: (context, index) {
+            return _buildProductCard(product: products[index]); // Pass the product data
+          },
+        );
       },
     );
   }
 
-  Widget _buildProductCard() {
+  Future<List<Product>> _fetchProductsByCategory(String category) async {
+    Query query = FirebaseFirestore.instance.collection('products');
+
+    if (category != 'All') {
+      query = query.where('category', isEqualTo: category);
+    }
+
+    final querySnapshot = await query.get();
+    return querySnapshot.docs.map((doc) => Product.fromFirestore(doc)).toList();
+  }
+
+  Widget _buildProductCard({required Product product}) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -180,8 +175,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
           children: [
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-              child: Image.asset(
-                'assets/product.jpg', // Replace with actual product image
+              child: Image.network(
+                product.imageUrl, // Use product's image URL
                 height: 120,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -192,9 +187,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Fresh Tomatoes',
-                    style: TextStyle(
+                  Text(
+                    product.name, // Use product's name
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -202,9 +197,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Kshs 50/kg',
-                    style: TextStyle(
+                  Text(
+                    'Kshs ${product.price}/kg', // Use product's price
+                    style: const TextStyle(
                       color: primaryGreen,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -220,7 +215,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Nairobi',
+                        product.location, // Use product's location
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 12,
@@ -288,6 +283,31 @@ class _MarketplacePageState extends State<MarketplacePage> {
         // Add specific filter controls based on the section
         const SizedBox(height: 16),
       ],
+    );
+  }
+}
+
+// Product Model
+class Product {
+  final String name;
+  final String imageUrl;
+  final String location;
+  final double price;
+
+  Product({
+    required this.name,
+    required this.imageUrl,
+    required this.location,
+    required this.price,
+  });
+
+  factory Product.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Product(
+      name: data['name'],
+      imageUrl: data['imageUrl'],
+      location: data['location'],
+      price: data['price'],
     );
   }
 }

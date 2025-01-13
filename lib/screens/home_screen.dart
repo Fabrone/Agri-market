@@ -380,23 +380,34 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildCategoryItem(IconData icon, String label) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.secondaryGreen.withOpacity(0.2),
-            shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () {
+        // Navigate to MarketplacePage with selected category
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MarketplacePage(selectedCategory: label),
           ),
-          child: Icon(icon, color: AppColors.primaryGreen),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12),
-        ),
-      ],
+        );
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.secondaryGreen.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primaryGreen),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 
@@ -424,7 +435,7 @@ class _HomePageState extends State<HomePage> {
           if (index == 1) { // Market tab
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const MarketplacePage()),
+              MaterialPageRoute(builder: (context) => const MarketplacePage(selectedCategory: 'All')),
             );
           }
 
