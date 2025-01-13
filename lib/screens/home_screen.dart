@@ -434,6 +434,7 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: primaryGreen,
       leading: IconButton(
         icon: const Icon(Icons.menu),
+        color: Colors.white,
         onPressed: () => _scaffoldKey.currentState?.openDrawer(),
       ),
       flexibleSpace: FlexibleSpaceBar(
@@ -443,6 +444,7 @@ class _HomePageState extends State<HomePage> {
               'Agrimarket',
               textStyle: const TextStyle(
                 fontSize: 20.0,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
               speed: const Duration(milliseconds: 200),
@@ -455,6 +457,7 @@ class _HomePageState extends State<HomePage> {
       actions: [
         IconButton(
           icon: const Icon(Icons.notifications),
+          color: Colors.white,
           onPressed: () {
             // Show notifications
           },
