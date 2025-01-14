@@ -4,10 +4,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:agri_market/splashscreen.dart';
 import 'firebase_options.dart';
 import 'package:logging/logging.dart';
+import 'package:agri_market/firestore_helper.dart';
 
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
+    FirestoreHelper.initializeLogging();
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
