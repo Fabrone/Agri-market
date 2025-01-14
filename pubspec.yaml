@@ -53,6 +53,7 @@ dependencies:
   animated_text_kit: ^4.2.2
   image_picker: ^1.1.2
   firebase_storage: ^12.4.0
+  flutter_image_compress: ^2.4.0
 
 dev_dependencies:
   flutter_test:

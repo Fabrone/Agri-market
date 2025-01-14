@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:agri_market/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:convert';
 import 'package:agri_market/firestore_helper.dart';
 import 'package:agri_market/product_model.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 class UploadProductsPage extends StatefulWidget {
   const UploadProductsPage({super.key});
@@ -59,7 +60,12 @@ class UploadProductsPageState extends State<UploadProductsPage> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final pickedFile = await _picker.pickImage(source: source);
+      final pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
       if (pickedFile != null) {
         setState(() {
           _imageFile = File(pickedFile.path);
@@ -67,6 +73,42 @@ class UploadProductsPageState extends State<UploadProductsPage> {
       }
     } catch (e) {
       _showErrorSnackBar('Error selecting image: $e');
+    }
+  }
+
+  Future<String> _convertImageToBase64(File imageFile) async {
+    try {
+      // First compression attempt
+      List<int>? compressedImage = await FlutterImageCompress.compressWithFile(
+        imageFile.absolute.path,
+        quality: 70,
+        minWidth: 1024,
+        minHeight: 1024,
+      );
+      
+      if (compressedImage == null) {
+        throw Exception('Failed to compress image');
+      }
+
+      // Check size and compress further if needed
+      double sizeInMb = compressedImage.length / (1024 * 1024);
+      if (sizeInMb > 1.0) {
+        compressedImage = await FlutterImageCompress.compressWithFile(
+          imageFile.absolute.path,
+          quality: 50,
+          minWidth: 800,
+          minHeight: 800,
+        );
+        
+        if (compressedImage == null) {
+          throw Exception('Failed to compress image further');
+        }
+      }
+
+      String base64Image = base64Encode(compressedImage);
+      return base64Image;
+    } catch (e) {
+      throw Exception('Error converting image: $e');
     }
   }
 
@@ -90,28 +132,21 @@ class UploadProductsPageState extends State<UploadProductsPage> {
       setState(() => _isLoading = true);
 
       try {
-        // Generate unique filename
-        String fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        String base64Image = await _convertImageToBase64(_imageFile!);
         
-        // Upload to Firebase Storage
-        final storageRef = FirebaseStorage.instance.ref().child('products/$fileName');
-        await storageRef.putFile(_imageFile!);
-        final String downloadUrl = await storageRef.getDownloadURL();
-
         final product = Product(
           id: DateTime.now().toString(),
           category: _selectedCategory!,
           description: _description,
           price: _price,
           quantityType: _quantityType,
-          imageUrl: downloadUrl,
+          imageUrl: base64Image,
         );
 
         await FirestoreHelper().addProduct(product);
 
         if (!mounted) return;
 
-        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Product uploaded successfully!'),
@@ -149,7 +184,6 @@ class UploadProductsPageState extends State<UploadProductsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Image Section
                       Container(
                         height: 200,
                         decoration: BoxDecoration(
@@ -177,7 +211,6 @@ class UploadProductsPageState extends State<UploadProductsPage> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Form Fields
                       Card(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
@@ -267,7 +300,6 @@ class UploadProductsPageState extends State<UploadProductsPage> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Upload Button
                       ElevatedButton(
                         onPressed: _uploadProduct,
                         style: ElevatedButton.styleFrom(

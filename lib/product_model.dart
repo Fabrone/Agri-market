@@ -1,10 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Product {
-  String id;
-  String category;
-  String description;
-  double price;
-  String quantityType;
-  String imageUrl;
+  final String id;
+  final String category;
+  final String description;
+  final double price;
+  final String quantityType;
+  final String imageUrl;
+  final DateTime createdAt;
 
   Product({
     required this.id,
@@ -13,26 +16,30 @@ class Product {
     required this.price,
     required this.quantityType,
     required this.imageUrl,
-  });
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'category': category,
       'description': description,
       'price': price,
       'quantityType': quantityType,
       'imageUrl': imageUrl,
+      'createdAt': createdAt,
     };
   }
 
   factory Product.fromMap(Map<String, dynamic> map) {
     return Product(
-      id: map['id'],
-      category: map['category'],
-      description: map['description'],
-      price: map['price'],
-      quantityType: map['quantityType'],
-      imageUrl: map['imageUrl'],
+      id: map['id'] ?? '',
+      category: map['category'] ?? '',
+      description: map['description'] ?? '',
+      price: (map['price'] ?? 0.0).toDouble(),
+      quantityType: map['quantityType'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
     );
   }
 }
