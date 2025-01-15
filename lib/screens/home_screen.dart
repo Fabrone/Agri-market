@@ -3,8 +3,9 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:agri_market/screens/marketplace.dart';
 import 'package:agri_market/screens/browseproducts.dart'; 
-import 'package:agri_market/screens/uploadproducts.dart'; 
-import 'package:agri_market/app_colors.dart'; 
+import 'package:agri_market/screens/uploadproducts.dart';
+import 'package:agri_market/screens/cart.dart';
+import 'package:agri_market/app_colors.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +24,7 @@ class _HomePageState extends State<HomePage> {
     'assets/banner3.jpg',
   ];
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,10 +37,9 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               children: [
                 _buildCarousel(),
-                _buildSearchBar(),
+                _buildCategories(),
                 _buildQuickActions(),
                 _buildFeaturedProducts(),
-                _buildCategorySection(),
               ],
             ),
           ),
@@ -49,7 +50,10 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: AppColors.primaryGreen,
         child: const Icon(Icons.add_shopping_cart),
         onPressed: () {
-          // Navigate to cart
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CartPage()),
+          );
         },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -108,7 +112,6 @@ class _HomePageState extends State<HomePage> {
       leading: Icon(icon, color: AppColors.primaryGreen),
       title: Text(title),
       onTap: () {
-        // Navigate to respective screen
         Navigator.pop(context);
       },
     );
@@ -141,34 +144,84 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildCategories() {
+    final List<Map<String, dynamic>> categories = [
+      {'icon': Icons.grass, 'label': 'Vegetables'},
+      {'icon': Icons.eco, 'label': 'Fruits'},
+      {'icon': Icons.grain, 'label': 'Grains'},
+      {'icon': Icons.spa, 'label': 'Herbs'},
+      {'icon': Icons.local_florist, 'label': 'Seedlings'},
+      {'icon': Icons.water_drop, 'label': 'Seeds'},
+      {'icon': Icons.pets, 'label': 'Animal Products'},
+      {'icon': Icons.restaurant, 'label': 'Spices'},
+    ];
+
     return Container(
-      margin: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
+      margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Categories',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryGreen,
+            ),
+          ),
+          const SizedBox(height: 15),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              childAspectRatio: 0.8,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 15,
+            ),
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              return _buildCategoryItem(
+                categories[index]['icon'],
+                categories[index]['label'],
+              );
+            },
           ),
         ],
       ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Search products, sellers, or locations...',
-          prefixIcon: const Icon(Icons.search, color: AppColors.primaryGreen),
-          suffixIcon: IconButton(
-            icon: const Icon(Icons.filter_list, color: AppColors.primaryGreen),
-            onPressed: () {
-              // Show filter options
-            },
+    );
+  }
+
+  Widget _buildCategoryItem(IconData icon, String label) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+        });
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MarketplacePage(selectedCategory: label),
           ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        ),
+        );
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.secondaryGreen.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primaryGreen),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
       ),
     );
   }
@@ -215,8 +268,12 @@ class _HomePageState extends State<HomePage> {
             context,
             MaterialPageRoute(builder: (context) => const UploadProductsPage()),
           );
+        } else if (label.contains('Cart')) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CartPage()),
+          );
         }
-        // Add similar navigation for My Cart and Near Me
       },
       child: Column(
         children: [
@@ -344,73 +401,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCategorySection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              'Categories',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryGreen,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 4,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              _buildCategoryItem(Icons.grass, 'Vegetables'),
-              _buildCategoryItem(Icons.eco, 'Fruits'),
-              _buildCategoryItem(Icons.grain, 'Grains'),
-              _buildCategoryItem(Icons.spa, 'Herbs'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryItem(IconData icon, String label) {
-    return GestureDetector(
-      onTap: () {
-        // Navigate to MarketplacePage with selected category
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MarketplacePage(selectedCategory: label),
-          ),
-        );
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.secondaryGreen.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: AppColors.primaryGreen),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
       items: const [
@@ -429,21 +419,32 @@ class _HomePageState extends State<HomePage> {
       ],
       currentIndex: _selectedIndex,
       selectedItemColor: AppColors.primaryGreen,
+      unselectedItemColor: Colors.grey,
       onTap: (index) {
         setState(() {
           _selectedIndex = index;
-          if (index == 1) { // Market tab
+        });
+        
+        if (index == _selectedIndex) {
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomePage()),
+            );
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MarketplacePage(selectedCategory: 'All')),
+            );
+          }
+        } else {
+          if (index == 1) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const MarketplacePage(selectedCategory: 'All')),
             );
           }
-
-          // else if (index == 2) { // Profile tab
-          //   Navigator.push(...);
-          // }
-
-        });
+        }
       },
     );
   }
@@ -481,7 +482,7 @@ class _HomePageState extends State<HomePage> {
           icon: const Icon(Icons.notifications),
           color: Colors.white,
           onPressed: () {
-            // Show notifications
+            // Notification functionality to be implemented
           },
         ),
       ],
