@@ -6,6 +6,11 @@ import 'package:agri_market/screens/browseproducts.dart';
 import 'package:agri_market/screens/uploadproducts.dart';
 import 'package:agri_market/screens/cart.dart';
 import 'package:agri_market/app_colors.dart';
+import 'package:in_app_update/in_app_update.dart';
+import 'package:logger/logger.dart';
+import 'package:agri_market/screens/settings_page.dart';
+import 'package:agri_market/screens/analytics_page.dart';
+import 'package:agri_market/screens/inventory_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,6 +22,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  AppUpdateInfo? _updateInfo;
 
   final List<String> _carouselImages = [
     'assets/banner1.jpg',
@@ -24,6 +30,92 @@ class _HomePageState extends State<HomePage> {
     'assets/banner3.jpg',
   ];
 
+  // Initialize logger
+  final logger = Logger(
+    printer: PrettyPrinter(
+      methodCount: 0,
+      errorMethodCount: 8,
+      lineLength: 120,
+      colors: true,
+      printEmojis: true,
+    ),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    checkForUpdate();
+  }
+
+  Future<void> checkForUpdate() async {
+    try {
+      _updateInfo = await InAppUpdate.checkForUpdate();
+      if (_updateInfo?.updateAvailability == UpdateAvailability.updateAvailable) {
+        _showUpdateDialog();
+      }
+    } catch (e, stackTrace) {
+      logger.e('Error checking for updates', error: e, stackTrace: stackTrace);
+    }
+  }
+
+  Future<void> performUpdate() async {
+    try {
+      if (_updateInfo?.updateAvailability == UpdateAvailability.updateAvailable) {
+        await InAppUpdate.performImmediateUpdate();
+      }
+    } catch (e, stackTrace) {
+      logger.e('Error performing update', error: e, stackTrace: stackTrace);
+      _showUpdateErrorDialog();
+    }
+  }
+
+  void _showUpdateDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Update Available'),
+          content: const Text('A new version of the app is available. Would you like to update now?'),
+          actions: [
+            TextButton(
+              child: const Text('Later'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Update'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                performUpdate();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showUpdateErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Update Failed'),
+          content: const Text('Failed to update the app. Please try again later.'),
+          actions: [
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +129,8 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               children: [
                 _buildCarousel(),
-                _buildCategories(),
                 _buildQuickActions(),
+                _buildCategories(),
                 _buildFeaturedProducts(),
               ],
             ),
@@ -93,12 +185,33 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          _buildDrawerItem(Icons.store, 'Marketplace'),
-          _buildDrawerItem(Icons.inventory, 'My Inventory'),
+          _buildDrawerItem(Icons.store, 'Marketplace', onTap: (){
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MarketplacePage(selectedCategory: '',))
+              );
+          }),
+          _buildDrawerItem(Icons.inventory, 'My Inventory', onTap: (){
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const InventoryPage())
+            );
+          }),
           _buildDrawerItem(Icons.location_on, 'Track Location'),
-          _buildDrawerItem(Icons.analytics, 'Market Analytics'),
+          _buildDrawerItem(Icons.analytics, 'Market Analytics', onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MarketAnalyticsPage())
+            );
+          }),
           _buildDrawerItem(Icons.history, 'Order History'),
-          _buildDrawerItem(Icons.settings, 'Settings'),
+          _buildDrawerItem(Icons.settings, 'Settings', onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsPage()),
+            );
+          }),
+          _buildDrawerItem(Icons.system_update, 'Check for Updates', onTap: checkForUpdate),
           const Divider(),
           _buildDrawerItem(Icons.help, 'Help & Support'),
           _buildDrawerItem(Icons.logout, 'Logout'),
@@ -107,12 +220,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  ListTile _buildDrawerItem(IconData icon, String title) {
+  ListTile _buildDrawerItem(IconData icon, String title, {VoidCallback? onTap}) {
     return ListTile(
       leading: Icon(icon, color: AppColors.primaryGreen),
       title: Text(title),
       onTap: () {
         Navigator.pop(context);
+        if (onTap != null) {
+          onTap();
+        }
       },
     );
   }
