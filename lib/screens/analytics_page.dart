@@ -1,6 +1,5 @@
-import 'package:agri_market/screens/inventory_page.dart';
 import 'package:flutter/material.dart';
-import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:fl_chart/fl_chart.dart';
 import 'package:agri_market/app_colors.dart';
 
 class MarketAnalyticsPage extends StatefulWidget {
@@ -78,12 +77,33 @@ class _MarketAnalyticsPageState extends State<MarketAnalyticsPage> {
     return Container(
       height: 300,
       padding: const EdgeInsets.all(16),
-      child: charts.TimeSeriesChart(
-        _createSampleTimeData(),
-        animate: true,
-        dateTimeFactory: const charts.LocalDateTimeFactory(),
+      child: LineChart(
+        LineChartData(
+          lineBarsData: _createSampleLineData(),
+          titlesData: const FlTitlesData(show: true),
+          borderData: FlBorderData(show: true),
+          gridData: const FlGridData(show: true),
+        ),
       ),
     );
+  }
+
+  List<LineChartBarData> _createSampleLineData() {
+    return [
+      LineChartBarData(
+        spots: [
+          const FlSpot(1, 5),
+          const FlSpot(2, 25),
+          const FlSpot(3, 100),
+          const FlSpot(4, 75),
+        ],
+        isCurved: true,
+        color: AppColors.primaryGreen, // Changed from colors to color
+        barWidth: 4,
+        isStrokeCapRound: true,
+        belowBarData: BarAreaData(show: false),
+      ),
+    ];
   }
 
   Widget _buildMetricsGrid() {
@@ -154,56 +174,23 @@ class _MarketAnalyticsPageState extends State<MarketAnalyticsPage> {
     return Container(
       height: 300,
       padding: const EdgeInsets.all(16),
-      child: charts.BarChart(
-        _createSampleBarData(),
-        animate: true,
-        vertical: false,
+      child: BarChart(
+        BarChartData(
+          barGroups: _createSampleBarData(),
+          titlesData: const FlTitlesData(show: true),
+          borderData: FlBorderData(show: true),
+          barTouchData: BarTouchData(enabled: false),
+        ),
       ),
     );
   }
 
-  List<charts.Series<TimeSeriesSales, DateTime>> _createSampleTimeData() {
-    final data = [
-      TimeSeriesSales(DateTime(2024, 1, 1), 5),
-      TimeSeriesSales(DateTime(2024, 1, 2), 25),
-      TimeSeriesSales(DateTime(2024, 1, 3), 100),
-      TimeSeriesSales(DateTime(2024, 1, 4), 75),
-    ];
-
+  List<BarChartGroupData> _createSampleBarData() {
     return [
-      charts.Series<TimeSeriesSales, DateTime>(
-        id: 'Sales',
-        colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
-        domainFn: (TimeSeriesSales sales, _) => sales.time,
-        measureFn: (TimeSeriesSales sales, _) => sales.sales,
-        data: data,
-      )
+      BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 5, color: AppColors.primaryGreen)]),
+      BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 25, color: AppColors.primaryGreen)]),
+      BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 100, color: AppColors.primaryGreen)]),
+      BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 75, color: AppColors.primaryGreen)]),
     ];
   }
-
-  List<charts.Series<OrdinalSales, String>> _createSampleBarData() {
-    final data = [
-      OrdinalSales('Product 1', 5),
-      OrdinalSales('Product 2', 25),
-      OrdinalSales('Product 3', 100),
-      OrdinalSales('Product 4', 75),
-    ];
-
-    return [
-      charts.Series<OrdinalSales, String>(
-        id: 'Sales',
-        colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
-        domainFn: (OrdinalSales sales, _) => sales.year,
-        measureFn: (OrdinalSales sales, _) => sales.sales,
-        data: data,
-      )
-    ];
-  }
-}
-
-class TimeSeriesSales {
-  final DateTime time;
-  final int sales;
-
-  TimeSeriesSales(this.time, this.sales);
 }

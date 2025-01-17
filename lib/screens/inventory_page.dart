@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:fl_chart/fl_chart.dart';
 import 'package:agri_market/app_colors.dart';
 
 class InventoryPage extends StatefulWidget {
@@ -113,9 +113,29 @@ class _InventoryPageState extends State<InventoryPage> with SingleTickerProvider
         Container(
           height: 200,
           padding: const EdgeInsets.all(16),
-          child: charts.BarChart(
-            _createSampleData(),
-            animate: true,
+          child: BarChart(
+            BarChartData(
+              barGroups: _createSampleBarData(),
+              titlesData: FlTitlesData(
+                leftTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: true),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      const titles = ['Mon', 'Tue', 'Wed', 'Thu'];
+                      if (value < 0 || value >= titles.length) return const SizedBox.shrink();
+                      return Text(
+                        titles[value.toInt()],
+                        style: const TextStyle(fontSize: 12),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+            ),
           ),
         ),
         Expanded(
@@ -159,22 +179,32 @@ class _InventoryPageState extends State<InventoryPage> with SingleTickerProvider
     );
   }
 
-  List<charts.Series<OrdinalSales, String>> _createSampleData() {
-    final data = [
-      OrdinalSales('Mon', 5),
-      OrdinalSales('Tue', 25),
-      OrdinalSales('Wed', 100),
-      OrdinalSales('Thu', 75),
-    ];
-
+  List<BarChartGroupData> _createSampleBarData() {
     return [
-      charts.Series<OrdinalSales, String>(
-        id: 'Sales',
-        colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
-        domainFn: (OrdinalSales sales, _) => sales.year,
-        measureFn: (OrdinalSales sales, _) => sales.sales,
-        data: data,
-      )
+      BarChartGroupData(
+        x: 0,
+        barRods: [
+          BarChartRodData(toY: 5, color: Colors.green),
+        ],
+      ),
+      BarChartGroupData(
+        x: 1,
+        barRods: [
+          BarChartRodData(toY: 25, color: Colors.green),
+        ],
+      ),
+      BarChartGroupData(
+        x: 2,
+        barRods: [
+          BarChartRodData(toY: 100, color: Colors.green),
+        ],
+      ),
+      BarChartGroupData(
+        x: 3,
+        barRods: [
+          BarChartRodData(toY: 75, color: Colors.green),
+        ],
+      ),
     ];
   }
 
@@ -248,11 +278,4 @@ class _InventoryPageState extends State<InventoryPage> with SingleTickerProvider
   void _showRestockDialog() {
     // Implementation for restock dialog
   }
-}
-
-class OrdinalSales {
-  final String year;
-  final int sales;
-
-  OrdinalSales(this.year, this.sales);
 }
