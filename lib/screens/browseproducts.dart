@@ -139,6 +139,34 @@ class _BrowseProductsPageState extends State<BrowseProductsPage> {
                     _updateProductsStream();
                   });
                 }),
+                const SizedBox(width: 8),
+                _buildFilterChip('Seedlings', _selectedCategory, (value) {
+                  setState(() {
+                    _selectedCategory = value;
+                    _updateProductsStream();
+                  });
+                }),
+                const SizedBox(width: 8),
+                _buildFilterChip('Seeds', _selectedCategory, (value) {
+                  setState(() {
+                    _selectedCategory = value;
+                    _updateProductsStream();
+                  });
+                }),
+                const SizedBox(width: 8),
+                _buildFilterChip('Animal Products', _selectedCategory, (value) {
+                  setState(() {
+                    _selectedCategory = value;
+                    _updateProductsStream();
+                  });
+                }),
+                const SizedBox(width: 8),
+                _buildFilterChip('Spices', _selectedCategory, (value) {
+                  setState(() {
+                    _selectedCategory = value;
+                    _updateProductsStream();
+                  });
+                }),
               ],
             ),
           ),

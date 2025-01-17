@@ -5,6 +5,7 @@ import 'package:agri_market/app_colors.dart';
 import 'package:agri_market/product_model.dart';
 import 'package:agri_market/screens/cart.dart';
 import 'package:agri_market/screens/uploadproducts.dart';
+import 'dart:async';
 
 class MarketplacePage extends StatefulWidget {
   final String selectedCategory;
@@ -19,6 +20,11 @@ class _MarketplacePageState extends State<MarketplacePage> {
   late Stream<QuerySnapshot> _productsStream;
   String _searchQuery = '';
   String _selectedCategory = 'All';
+  late List<QueryDocumentSnapshot> _allProducts = [];
+  List<QueryDocumentSnapshot> _filteredProducts = [];
+  bool _isSearchActive = false;
+  Timer? _searchDebounce;
+  bool _isSearching = false;
   
   @override
   void initState() {
@@ -34,11 +40,6 @@ class _MarketplacePageState extends State<MarketplacePage> {
       query = query.where('category', isEqualTo: _selectedCategory);
     }
 
-    if (_searchQuery.isNotEmpty) {
-      query = query.where('description', isGreaterThanOrEqualTo: _searchQuery)
-                  .where('description', isLessThan: '${_searchQuery}z');
-    }
-
     query = query.orderBy('createdAt', descending: true);
 
     setState(() {
@@ -46,8 +47,14 @@ class _MarketplacePageState extends State<MarketplacePage> {
     });
   }
 
-  void _navigateToProductDetails(Product product) {
-    Navigator.push(
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _navigateToProductDetails(BuildContext context, Product product) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ProductDetailsPage(product: product),
@@ -55,8 +62,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
     );
   }
 
-  void _navigateToCart() {
-    Navigator.push(
+  Future<void> _navigateToCart(BuildContext context) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const CartPage(),
@@ -64,8 +71,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
     );
   }
 
-  void _navigateToAddProduct() {
-    Navigator.push(
+  Future<void> _navigateToAddProduct(BuildContext context) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const UploadProductsPage(),
@@ -73,6 +80,48 @@ class _MarketplacePageState extends State<MarketplacePage> {
     );
   }
 
+    //New search method
+  void _handleSearch(String searchQuery) {
+    setState(() {
+      _searchQuery = searchQuery;
+      if (searchQuery.isEmpty) {
+        _isSearchActive = false;
+        _filteredProducts = [];
+        _updateProductsStream();
+      } else {
+        _isSearchActive = true;
+        _filteredProducts = _allProducts.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final description = data['description'].toString().toLowerCase();
+          final category = data['category'].toString().toLowerCase();
+          final searchLower = searchQuery.toLowerCase();
+          
+          return description.contains(searchLower) || 
+                category.contains(searchLower);
+        }).toList();
+      }
+    });
+  }
+
+  Future<void> _debouncedSearch(String searchQuery) async {
+  // Cancel any existing timer
+  if (_searchDebounce?.isActive ?? false) _searchDebounce!.cancel();
+  
+  // Set searching state
+  setState(() {
+    _isSearching = true;
+  });
+
+  // Create new timer
+  _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+    _handleSearch(searchQuery);
+    setState(() {
+      _isSearching = false;
+    });
+  });
+}
+
+  // Updated _buildSearchBar method
   Widget _buildSearchBar() {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -82,22 +131,57 @@ class _MarketplacePageState extends State<MarketplacePage> {
         borderRadius: BorderRadius.circular(25),
       ),
       child: TextField(
-        decoration: const InputDecoration(
-          icon: Icon(Icons.search),
+        decoration: InputDecoration(
+          icon: _isSearching 
+            ? SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.grey[600],
+                ),
+              )
+            : const Icon(Icons.search),
           hintText: 'Search products...',
           border: InputBorder.none,
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_isSearching)
+                const Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: Text('Searching...', 
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              if (_isSearchActive)
+                IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      _searchQuery = '';
+                      _isSearchActive = false;
+                      _isSearching = false;
+                      _filteredProducts = [];
+                      _searchDebounce?.cancel();
+                      _updateProductsStream();
+                    });
+                  },
+                ),
+            ],
+          ),
         ),
         onChanged: (value) {
-          setState(() {
-            _searchQuery = value;
-            _updateProductsStream();
-          });
+          _debouncedSearch(value);
         },
       ),
     );
   }
 
-  Widget _buildProductCard(Product product) {
+  Widget _buildProductCard(BuildContext context, Product product) {
     return Card(
       elevation: 4,
       margin: const EdgeInsets.all(8),
@@ -105,7 +189,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
         borderRadius: BorderRadius.circular(15),
       ),
       child: InkWell(
-        onTap: () => _navigateToProductDetails(product),
+        onTap: () => _navigateToProductDetails(context, product),
         borderRadius: BorderRadius.circular(15),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -226,12 +310,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Back',
         ),
         title: Text('$_selectedCategory Products'),
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_cart),
-            onPressed: _navigateToCart,
+            onPressed: () => _navigateToCart(context),
           ),
         ],
       ),
@@ -239,55 +324,64 @@ class _MarketplacePageState extends State<MarketplacePage> {
         children: [
           _buildSearchBar(),
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _productsStream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            child: 
+              StreamBuilder<QuerySnapshot>(
+                stream: _productsStream,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.shopping_basket_outlined,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _searchQuery.isEmpty 
-                            ? 'No products available' 
-                            : 'No products match your search',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.shopping_basket_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+                          const SizedBox(height: 16),
+                          Text(
+                            _searchQuery.isEmpty 
+                              ? 'No products available' 
+                              : 'No products match your search',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (context, index) {
-                    final doc = snapshot.data!.docs[index];
-                    final product = Product.fromMap(doc.data() as Map<String, dynamic>);
-                    return _buildProductCard(product);
-                  },
-                );
-              },
-            ),
+                  // Update _allProducts when new data arrives
+                  if (!_isSearchActive) {
+                    _allProducts = snapshot.data!.docs;
+                  }
+
+                  // Use filtered products if search is active, otherwise use all products
+                  final productsToDisplay = _isSearchActive ? _filteredProducts : _allProducts;
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(8),
+                    itemCount: productsToDisplay.length,
+                    itemBuilder: (context, index) {
+                      final doc = productsToDisplay[index];
+                      final product = Product.fromMap(doc.data() as Map<String, dynamic>);
+                      return _buildProductCard(context, product);
+                    },
+                  );
+                },
+              )
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primaryGreen,
-        onPressed: _navigateToAddProduct,
+        onPressed: () => _navigateToAddProduct(context),
         child: const Icon(Icons.add),
       ),
     );
@@ -306,6 +400,7 @@ class ProductDetailsPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Back',
         ),
         title: const Text('Product Details'),
         backgroundColor: AppColors.primaryGreen,
@@ -314,7 +409,6 @@ class ProductDetailsPage extends StatelessWidget {
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 600) {
-            // Tablet/Desktop layout
             return SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -335,7 +429,6 @@ class ProductDetailsPage extends StatelessWidget {
               ),
             );
           } else {
-            // Mobile layout
             return SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

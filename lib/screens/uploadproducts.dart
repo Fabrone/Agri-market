@@ -229,7 +229,7 @@ class UploadProductsPageState extends State<UploadProductsPage> {
                                   filled: true,
                                   fillColor: Colors.grey[100],
                                 ),
-                                items: ['Vegetables', 'Fruits', 'Grains', 'Herbs']
+                                items: ['Vegetables', 'Fruits', 'Grains', 'Herbs', 'Seedlings', 'Seeds', 'Animal Products', 'Spices']
                                     .map((category) => DropdownMenuItem(
                                           value: category,
                                           child: Text(category),
