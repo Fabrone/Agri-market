@@ -432,7 +432,7 @@ class _HomePageState extends State<HomePage> {
               MaterialPageRoute(builder: (context) => const HomePage()),
             );
           } else if (index == 1) {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const MarketplacePage(selectedCategory: 'All')),
             );
