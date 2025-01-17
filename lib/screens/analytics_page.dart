@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:agri_market/app_colors.dart';
 
 class MarketAnalyticsPage extends StatefulWidget {
@@ -13,6 +12,11 @@ class _MarketAnalyticsPageState extends State<MarketAnalyticsPage> {
   String _selectedTimeRange = 'Week';
   String _selectedMetric = 'Sales';
 
+  final int totalSales = 50000;
+  final int totalProductsSold = 150;
+  final int totalUsers = 100; // Assuming total users for percentage calculation
+  final int activeUsers = 75;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,10 +28,8 @@ class _MarketAnalyticsPageState extends State<MarketAnalyticsPage> {
         child: Column(
           children: [
             _buildFilterSection(),
-            _buildMainChart(),
             _buildMetricsGrid(),
             _buildTrendingProducts(),
-            _buildPriceAnalysis(),
           ],
         ),
       ),
@@ -73,39 +75,6 @@ class _MarketAnalyticsPageState extends State<MarketAnalyticsPage> {
     );
   }
 
-  Widget _buildMainChart() {
-    return Container(
-      height: 300,
-      padding: const EdgeInsets.all(16),
-      child: LineChart(
-        LineChartData(
-          lineBarsData: _createSampleLineData(),
-          titlesData: const FlTitlesData(show: true),
-          borderData: FlBorderData(show: true),
-          gridData: const FlGridData(show: true),
-        ),
-      ),
-    );
-  }
-
-  List<LineChartBarData> _createSampleLineData() {
-    return [
-      LineChartBarData(
-        spots: [
-          const FlSpot(1, 5),
-          const FlSpot(2, 25),
-          const FlSpot(3, 100),
-          const FlSpot(4, 75),
-        ],
-        isCurved: true,
-        color: AppColors.primaryGreen, // Changed from colors to color
-        barWidth: 4,
-        isStrokeCapRound: true,
-        belowBarData: BarAreaData(show: false),
-      ),
-    ];
-  }
-
   Widget _buildMetricsGrid() {
     return GridView.count(
       shrinkWrap: true,
@@ -113,10 +82,12 @@ class _MarketAnalyticsPageState extends State<MarketAnalyticsPage> {
       crossAxisCount: 2,
       padding: const EdgeInsets.all(16),
       children: [
-        _buildMetricCard('Total Sales', '₹50,000', Icons.trending_up),
-        _buildMetricCard('Products Sold', '150', Icons.shopping_cart),
-        _buildMetricCard('Active Users', '75', Icons.person),
-        _buildMetricCard('Average Order', '₹333', Icons.assessment),
+        _buildMetricCard('Total Sales', '₹$totalSales', Icons.trending_up),
+        _buildMetricCard('Products Sold', '$totalProductsSold', Icons.shopping_cart),
+        _buildMetricCard('Active Users', '$activeUsers', Icons.person),
+        _buildMetricCard('Average Order', '₹${(totalSales / totalProductsSold).toStringAsFixed(2)}', Icons.assessment),
+        _buildPercentageCard('Sales Percentage', (totalSales / 100000 * 100).toStringAsFixed(2)), // Assuming 100000 as a benchmark
+        _buildPercentageCard('Active Users Percentage', (activeUsers / totalUsers * 100).toStringAsFixed(2)),
       ],
     );
   }
@@ -132,6 +103,27 @@ class _MarketAnalyticsPageState extends State<MarketAnalyticsPage> {
             const SizedBox(height: 8),
             Text(title, style: const TextStyle(fontSize: 14)),
             Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPercentageCard(String title, String percentage) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(title, style: const TextStyle(fontSize: 14)),
+            Text('$percentage%', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(
+              value: double.parse(percentage) / 100,
+              backgroundColor: Colors.grey[300],
+              color: AppColors.primaryGreen,
+            ),
           ],
         ),
       ),
@@ -168,29 +160,5 @@ class _MarketAnalyticsPageState extends State<MarketAnalyticsPage> {
         ],
       ),
     );
-  }
-
-  Widget _buildPriceAnalysis() {
-    return Container(
-      height: 300,
-      padding: const EdgeInsets.all(16),
-      child: BarChart(
-        BarChartData(
-          barGroups: _createSampleBarData(),
-          titlesData: const FlTitlesData(show: true),
-          borderData: FlBorderData(show: true),
-          barTouchData: BarTouchData(enabled: false),
-        ),
-      ),
-    );
-  }
-
-  List<BarChartGroupData> _createSampleBarData() {
-    return [
-      BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 5, color: AppColors.primaryGreen)]),
-      BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 25, color: AppColors.primaryGreen)]),
-      BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 100, color: AppColors.primaryGreen)]),
-      BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 75, color: AppColors.primaryGreen)]),
-    ];
   }
 }

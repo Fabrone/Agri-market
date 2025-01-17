@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:agri_market/app_colors.dart';
 
 class InventoryPage extends StatefulWidget {
@@ -12,6 +11,11 @@ class InventoryPage extends StatefulWidget {
 class _InventoryPageState extends State<InventoryPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
+
+  // Sample data for stock levels
+  final int totalStock = 500; // Total stock available
+  final int lowStockThreshold = 100; // Threshold for low stock alerts
+  final List<int> stockLevels = [50, 150, 200, 100]; // Sample stock levels for products
 
   @override
   void initState() {
@@ -110,47 +114,37 @@ class _InventoryPageState extends State<InventoryPage> with SingleTickerProvider
   Widget _buildStockTab() {
     return Column(
       children: [
-        Container(
-          height: 200,
+        Padding(
           padding: const EdgeInsets.all(16),
-          child: BarChart(
-            BarChartData(
-              barGroups: _createSampleBarData(),
-              titlesData: FlTitlesData(
-                leftTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: true),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      const titles = ['Mon', 'Tue', 'Wed', 'Thu'];
-                      if (value < 0 || value >= titles.length) return const SizedBox.shrink();
-                      return Text(
-                        titles[value.toInt()],
-                        style: const TextStyle(fontSize: 12),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-            ),
+          child: Text(
+            'Total Stock: $totalStock units',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
         Expanded(
           child: ListView.builder(
-            itemCount: 5,
+            itemCount: stockLevels.length,
             itemBuilder: (context, index) {
+              String alertMessage = stockLevels[index] < lowStockThreshold
+                  ? 'Low stock warning'
+                  : 'Stock level is sufficient';
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListTile(
-                  title: Text('Stock Alert ${index + 1}'),
-                  subtitle: Text('Low stock warning: Product ${index + 1}'),
-                  leading: const Icon(Icons.warning, color: Colors.orange),
-                  trailing: TextButton(
-                    onPressed: () => _showRestockDialog(),
-                    child: const Text('Restock'),
+                  title: Text('Product ${index + 1}'),
+                  subtitle: Text(alertMessage),
+                  leading: const Icon(Icons.inventory, color: AppColors.primaryGreen),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('${stockLevels[index]} units'),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: stockLevels[index] / totalStock,
+                        backgroundColor: Colors.grey[300],
+                        color: AppColors.primaryGreen,
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -177,35 +171,6 @@ class _InventoryPageState extends State<InventoryPage> with SingleTickerProvider
         );
       },
     );
-  }
-
-  List<BarChartGroupData> _createSampleBarData() {
-    return [
-      BarChartGroupData(
-        x: 0,
-        barRods: [
-          BarChartRodData(toY: 5, color: Colors.green),
-        ],
-      ),
-      BarChartGroupData(
-        x: 1,
-        barRods: [
-          BarChartRodData(toY: 25, color: Colors.green),
-        ],
-      ),
-      BarChartGroupData(
-        x: 2,
-        barRods: [
-          BarChartRodData(toY: 100, color: Colors.green),
-        ],
-      ),
-      BarChartGroupData(
-        x: 3,
-        barRods: [
-          BarChartRodData(toY: 75, color: Colors.green),
-        ],
-      ),
-    ];
   }
 
   void _showAddProductDialog() {
@@ -273,9 +238,5 @@ class _InventoryPageState extends State<InventoryPage> with SingleTickerProvider
         ],
       ),
     );
-  }
-
-  void _showRestockDialog() {
-    // Implementation for restock dialog
   }
 }
