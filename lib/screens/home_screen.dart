@@ -188,8 +188,8 @@ class _HomePageState extends State<HomePage> {
           _buildDrawerItem(Icons.store, 'Marketplace', onTap: (){
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const MarketplacePage(selectedCategory: '',))
-              );
+              MaterialPageRoute(builder: (context) => const MarketplacePage(selectedCategory: 'All'))
+            );
           }),
           _buildDrawerItem(Icons.inventory, 'My Inventory', onTap: (){
             Navigator.push(
@@ -311,8 +311,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildCategoryItem(IconData icon, String label) {
     return GestureDetector(
       onTap: () {
-        setState(() {
-        });
+        // Navigate to MarketplacePage with the selected category
         Navigator.push(
           context,
           MaterialPageRoute(

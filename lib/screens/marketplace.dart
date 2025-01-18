@@ -7,6 +7,8 @@ import 'package:agri_market/screens/cart.dart';
 import 'package:agri_market/screens/uploadproducts.dart';
 import 'dart:async';
 
+
+
 class MarketplacePage extends StatefulWidget {
   final String selectedCategory;
 
@@ -388,6 +390,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 }
 
+
 class ProductDetailsPage extends StatelessWidget {
   final Product product;
 
@@ -402,43 +405,43 @@ class ProductDetailsPage extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
           tooltip: 'Back',
         ),
-        title: const Text('Product Details'),
+        title: const Text(
+          'Product Details',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: AppColors.primaryGreen,
         elevation: 0,
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth > 600) {
-            return SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 1,
-                      child: _buildProductImage(product),
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: constraints.maxWidth > 600
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: _buildProductImage(product),
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          flex: 1,
+                          child: _buildProductDetails(product),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildProductImage(product),
+                        const SizedBox(height: 16),
+                        _buildProductDetails(product),
+                      ],
                     ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      flex: 1,
-                      child: _buildProductDetails(product),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else {
-            return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildProductImage(product),
-                  _buildProductDetails(product),
-                ],
-              ),
-            );
-          }
+            ),
+          );
         },
       ),
       bottomNavigationBar: _buildContactButton(),
@@ -446,22 +449,25 @@ class ProductDetailsPage extends StatelessWidget {
   }
 
   Widget _buildProductImage(Product product) {
-    return SizedBox(
-      height: 300,
-      width: double.infinity,
-      child: Image.memory(
-        base64Decode(product.imageUrl),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: Colors.grey[200],
-            child: const Icon(
-              Icons.image_not_supported,
-              size: 50,
-              color: Colors.grey,
-            ),
-          );
-        },
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        height: 300,
+        width: double.infinity,
+        child: Image.memory(
+          base64Decode(product.imageUrl),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.grey[200],
+              child: const Icon(
+                Icons.image_not_supported,
+                size: 50,
+                color: Colors.grey,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -536,7 +542,7 @@ class ProductDetailsPage extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
           ),
         ],
@@ -551,12 +557,15 @@ class ProductDetailsPage extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         child: const Text(
           'Contact Seller',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
       ),
