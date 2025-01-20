@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'package:agri_market/firestore_helper.dart';
 import 'package:agri_market/product_model.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:agri_market/screens/uploaded_products.dart';
 
 class UploadProductsPage extends StatefulWidget {
   const UploadProductsPage({super.key});
@@ -14,7 +16,7 @@ class UploadProductsPage extends StatefulWidget {
   UploadProductsPageState createState() => UploadProductsPageState();
 }
 
-class UploadProductsPageState extends State<UploadProductsPage> {
+class UploadProductsPageState extends State<UploadProductsPage> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   String? _selectedCategory;
   String _description = '';
@@ -22,8 +24,31 @@ class UploadProductsPageState extends State<UploadProductsPage> {
   String _quantityType = 'per kg';
   File? _imageFile;
   bool _isLoading = false;
+  late AnimationController _buttonAnimationController;
+  late Animation<double> _buttonScaleAnimation;
 
   final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _buttonAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _buttonScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(
+        parent: _buttonAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _buttonAnimationController.dispose();
+    super.dispose();
+  }
 
   void _showImageSourceDialog() {
     showDialog(
@@ -58,6 +83,20 @@ class UploadProductsPageState extends State<UploadProductsPage> {
     );
   }
 
+  Future<void> _navigateToUploadedProducts() async {
+    // Add button press animation
+    _buttonAnimationController.forward().then((_) {
+      _buttonAnimationController.reverse();
+    });
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const UploadedProductsPage(),
+      ),
+    );
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     try {
       final pickedFile = await _picker.pickImage(
@@ -78,7 +117,6 @@ class UploadProductsPageState extends State<UploadProductsPage> {
 
   Future<String> _convertImageToBase64(File imageFile) async {
     try {
-      // First compression attempt
       List<int>? compressedImage = await FlutterImageCompress.compressWithFile(
         imageFile.absolute.path,
         quality: 70,
@@ -90,7 +128,6 @@ class UploadProductsPageState extends State<UploadProductsPage> {
         throw Exception('Failed to compress image');
       }
 
-      // Check size and compress further if needed
       double sizeInMb = compressedImage.length / (1024 * 1024);
       if (sizeInMb > 1.0) {
         compressedImage = await FlutterImageCompress.compressWithFile(
@@ -105,8 +142,7 @@ class UploadProductsPageState extends State<UploadProductsPage> {
         }
       }
 
-      String base64Image = base64Encode(compressedImage);
-      return base64Image;
+      return base64Encode(compressedImage);
     } catch (e) {
       throw Exception('Error converting image: $e');
     }
@@ -133,14 +169,17 @@ class UploadProductsPageState extends State<UploadProductsPage> {
 
       try {
         String base64Image = await _convertImageToBase64(_imageFile!);
+        final userId = FirebaseAuth.instance.currentUser!.uid;
         
         final product = Product(
           id: DateTime.now().toString(),
+          userId: userId, // Add userId to the product
           category: _selectedCategory!,
           description: _description,
           price: _price,
           quantityType: _quantityType,
           imageUrl: base64Image,
+          createdAt: DateTime.now(),
         );
 
         await FirestoreHelper().addProduct(product);
@@ -184,38 +223,82 @@ class UploadProductsPageState extends State<UploadProductsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: _imageFile != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(15),
-                                child: Image.file(
-                                  _imageFile!,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : Center(
-                                child: IconButton(
-                                  icon: const Icon(
-                                    Icons.add_photo_alternate,
-                                    size: 50,
-                                    color: AppColors.primaryGreen,
-                                  ),
-                                  onPressed: _showImageSourceDialog,
+                      // View My Uploads Button
+                      ScaleTransition(
+                        scale: _buttonScaleAnimation,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 24),
+                          child: ElevatedButton.icon(
+                            onPressed: _navigateToUploadedProducts,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: AppColors.primaryGreen,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                side: const BorderSide(
+                                  color: AppColors.primaryGreen,
+                                  width: 2,
                                 ),
                               ),
+                              elevation: 2,
+                            ),
+                            icon: const Icon(Icons.inventory),
+                            label: const Text(
+                              'View My Uploads',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Image Container
+                      Hero(
+                        tag: 'productImage',
+                        child: Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: _imageFile != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: Image.file(
+                                    _imageFile!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Center(
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.add_photo_alternate,
+                                      size: 50,
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                    onPressed: _showImageSourceDialog,
+                                  ),
+                                ),
+                        ),
                       ),
                       const SizedBox(height: 24),
 
+                      // Form Card
                       Card(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
-                        elevation: 2,
+                        elevation: 4,
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -300,6 +383,7 @@ class UploadProductsPageState extends State<UploadProductsPage> {
                       ),
                       const SizedBox(height: 24),
 
+                      // Upload Button
                       ElevatedButton(
                         onPressed: _uploadProduct,
                         style: ElevatedButton.styleFrom(
@@ -308,10 +392,14 @@ class UploadProductsPageState extends State<UploadProductsPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
+                          elevation: 4,
                         ),
                         child: const Text(
                           'Upload Product',
-                          style: TextStyle(fontSize: 16),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
